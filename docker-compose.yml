@@ -1,0 +1,329 @@
+version: '3'
+
+networks:
+  backend:
+
+services:
+
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT}:80"
+      - "${NGINX_PORT_HTTPS}:443"
+    volumes:
+      - ./projects:/var/www
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./certificates:/etc/nginx/ssl/certificates
+      - ./nginx/logs:/var/log/nginx/
+    depends_on:
+#      - php-7.1
+#      - php-7.3
+      - php-7.4
+      - php-5.6
+#      - mysql-8
+      - mysql-5.7
+      - redis
+#      - mongo
+#      - postgres
+#      - libreoffice
+    environment:
+      TZ: ${WORKSPACE_TIMEZONE}
+    networks:
+      - backend
+
+#  elasticsearch:
+#    build:
+#      context: elasticsearch
+#      args:
+#        - ELASTICSEARCH_VERSION=7.14.1
+#      dockerfile: Dockerfile
+#    container_name: elastic
+#    restart: unless-stopped
+#    environment:
+#      - discovery.type=single-node
+#      - node.name=elasticsearch
+#      - cluster.name=elasticsearch-docker-cluster
+#      - bootstrap.memory_lock=true
+#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#    ulimits:
+#        memlock:
+#          soft: -1
+#          hard: -1
+#        nofile:
+#          soft: 65536
+#          hard: 65536
+#    volumes:
+#      - ./elasticsearch/data:/usr/share/elasticsearch/data
+#    ports:
+#      - "${ELASTICSEARCH_PORT}:9200"
+#    depends_on:
+##      - php-7.3
+#      - php-7.4
+#    networks:
+#      - backend
+
+  redis:
+    image: redis:latest
+    ports:
+      - "${REDIS_PORT}:6379"
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - ./redis/data:/var/lib/redis
+      - ./redis/conf:/usr/local/etc/redis/redis.conf
+    environment:
+      TZ: ${WORKSPACE_TIMEZONE}
+    networks:
+      - backend
+
+#  libreoffice:
+#    image: linuxserver/libreoffice
+#    container_name: libreoffice
+#    environment:
+#      PUID: 1000
+#      PGID: 1000
+#      TZ: ${WORKSPACE_TIMEZONE}
+##    depends_on:
+##      - php-7.3
+##      - php-7.4
+#    volumes:
+#      - ./libreoffice/conf:/usr/local/etc/libreoffice/libreoffice.conf
+#    ports:
+#      - 3000:3000
+#    networks:
+#      - backend
+
+  mysql-5.7:
+    platform: linux/amd64
+    image: mysql:5.7
+    container_name: mysql-5.7
+    restart: unless-stopped
+    volumes:
+      - ./mysql-5.7/data:/var/lib/mysql
+      - ./mysql-5.7/conf.d:/etc/mysql/conf.d
+      - ./mysql-5.7/logs:/var/log/mysql/
+      - ./mysql-5.7/dump:/dump
+    ports:
+      - "${MYSQL_5_7_PORT}:3306"
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: ${WORKSPACE_TIMEZONE}
+    networks:
+      - backend
+
+#  mysql-8:
+#    platform: linux/x86_64
+#    image: mysql:8.0.21
+#    command: --default-authentication-plugin=mysql_native_password --skip_name_resolve
+#    container_name: mysql-8
+#    restart: unless-stopped
+#    volumes:
+#      - ./mysql-8/data:/var/lib/mysql
+#      - ./mysql-8/conf.d:/etc/mysql/conf.d
+#      - ./mysql-8/logs:/var/log/mysql/
+#      - ./mysql-8/dump:/dump
+#    ports:
+#      - "${MYSQL_8_PORT}:3306"
+#    security_opt:
+#      - seccomp:unconfined
+#    environment:
+#      MYSQL_DATABASE: ${MYSQL_DATABASE}
+#      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+#      TZ: ${WORKSPACE_TIMEZONE}
+#    networks:
+#      - backend
+
+  postgres:
+    image: postgres:13.4-alpine
+    restart: unless-stopped
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+      - ./postgres/dump:/dump
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: ${WORKSPACE_TIMEZONE}
+    networks:
+        - backend
+    container_name: postgres
+
+#  mongo:
+#    image: mongo:4.2
+#    ports:
+#      - "${MONGO_PORT}:27017"
+#    volumes:
+#      - ./mongo/db:/data/db
+#      - ./mongo/configdb:/data/configdb
+#      - ./mongo/dump:/dump
+#    environment:
+#      TZ: ${WORKSPACE_TIMEZONE}
+#    networks:
+#      - backend
+#    container_name: mongo
+#
+#  php-8.0:
+#    build:
+#      context: php-8-workspace
+#      dockerfile: Dockerfile
+#      args:
+#        DOCKER_PHP_VERSION: '8.0'
+#        TZ: ${WORKSPACE_TIMEZONE}
+#    working_dir: /var/www
+#    container_name: php-8.0
+#    volumes:
+#      - ./.ssh:/home/www-data/.ssh
+#      - ./projects:/var/www
+#      - ./php-ini/8.0/php.ini:/usr/local/etc/php/php.ini
+#      - ./php-workers/8.0/supervisor.d:/etc/supervisor.d
+#    ports:
+#      - "${PHP_8_0_PORT}:9000"
+#    networks:
+#      - backend
+#    extra_hosts:
+#      - 'wordpress-importer.loc:192.168.65.2'
+#      - 'srs.loc:192.168.65.2'
+
+  php-8.2:
+    build:
+      context: php-8.2-workspace
+      dockerfile: Dockerfile
+      args:
+        DOCKER_PHP_VERSION: '8.2'
+        TZ: ${WORKSPACE_TIMEZONE}
+    working_dir: /var/www
+    container_name: php-8.2
+    volumes:
+      - ./.ssh:/home/www-data/.ssh
+      - ./projects:/var/www
+      - ./php-ini/8.2/php.ini:/usr/local/etc/php/php.ini
+      - ./php-workers/8.2/supervisor.d:/etc/supervisor.d
+    ports:
+      - "${PHP_8_2_PORT}:9000"
+      - "10000:10000"
+    networks:
+      - backend
+    extra_hosts:
+      - 'wordpress-importer.loc:192.168.65.254'
+      - 'srs.loc:192.168.65.254'
+
+#  php-7.0:
+#    build:
+#      context: php-7.0-workspace
+#      dockerfile: Dockerfile
+#      args:
+#        DOCKER_PHP_VERSION: '7.0'
+#        DOCKER_PHP_ENABLE_XDEBUG: ${DOCKER_PHP_ENABLE_XDEBUG}
+#        TZ: ${WORKSPACE_TIMEZONE}
+#    restart: unless-stopped
+#    working_dir: /var/www
+#    container_name: php-7.0
+#    volumes:
+#      - ./.ssh:/home/www-data/.ssh
+#      - ./projects:/var/www
+#      - ./php-ini/7.0/php.ini:/usr/local/etc/php/php.ini
+#      - ./php-workers/7.0/supervisor.d:/etc/supervisor.d
+#    links:
+#      - redis
+#    ports:
+#      - "${PHP_7_0_PORT}:9000"
+#    networks:
+#      - backend
+#    depends_on:
+#      - redis
+##      - libreoffice
+
+
+  php-5.6:
+    build:
+      context: php-5.6-workspace
+      dockerfile: Dockerfile
+      args:
+        DOCKER_PHP_VERSION: '5.6'
+        DOCKER_PHP_ENABLE_XDEBUG: ${DOCKER_PHP_ENABLE_XDEBUG}
+        TZ: ${WORKSPACE_TIMEZONE}
+    restart: unless-stopped
+    working_dir: /var/www
+    container_name: php-5.6
+    volumes:
+      - ./.ssh:/home/www-data/.ssh
+      - ./projects:/var/www
+      - ./php-ini/5.6/php.ini:/usr/local/etc/php/php.ini
+      - ./php-workers/5.6/supervisor.d:/etc/supervisor.d
+    links:
+#      - postgres
+      - redis
+    ports:
+      - "${PHP_5_6_PORT}:9000"
+    networks:
+      - backend
+    depends_on:
+#      - postgres
+      - redis
+
+  php-7.4:
+    build:
+      context: php-7.4-workspace
+      dockerfile: Dockerfile
+      args:
+        DOCKER_PHP_VERSION: '7.4'
+        DOCKER_PHP_ENABLE_XDEBUG: ${DOCKER_PHP_ENABLE_XDEBUG}
+        TZ: ${WORKSPACE_TIMEZONE}
+    restart: unless-stopped
+    working_dir: /var/www
+    container_name: php-7.4
+    volumes:
+      - ./.ssh:/home/www-data/.ssh
+      - ./projects:/var/www
+      - ./php-ini/7.4/php.ini:/usr/local/etc/php/php.ini
+      - ./php-workers/7.4/supervisor.d:/etc/supervisor.d
+      - ./fpm/docker.conf:/usr/local/etc/php-fpm.d/docker.conf
+      - ./libreoffice/etc/fonts:/etc/fonts
+      - ./libreoffice/usr/share/fontconfig:/usr/share/fontconfig
+      - ./libreoffice/usr/share/fonts:/usr/share/fonts
+      - ./libreoffice/var/cache/fontconfig:/var/cache/fontconfig
+    links:
+#      - postgres
+      - redis
+    ports:
+      - "${PHP_7_4_PORT}:9000"
+    networks:
+      - backend
+    depends_on:
+#      - postgres
+      - redis
+#      - libreoffice
+    extra_hosts:
+      - 'wordpress-importer.loc:192.168.65.254'
+      - 'srs.loc:192.168.65.254'
+
+  php-7.3:
+    build:
+      context: php-7-workspace
+      dockerfile: Dockerfile
+      args:
+        DOCKER_PHP_VERSION: '7.3'
+        DOCKER_PHP_ENABLE_XDEBUG: ${DOCKER_PHP_ENABLE_XDEBUG}
+        TZ: ${WORKSPACE_TIMEZONE}
+    working_dir: /var/www
+    container_name: php-7.3
+    volumes:
+      - ./.ssh:/home/www-data/.ssh
+      - ./projects:/var/www
+      - ./php-ini/7.3/php.ini:/usr/local/etc/php/php.ini
+      - ./php-workers/7.3/supervisor.d:/etc/supervisor.d
+    ports:
+      - "${PHP_7_3_PORT}:9000"
+    networks:
+      - backend
+    extra_hosts:
+      - 'project-1.localhost:192.168.65.2'
+      - 'project-2.localhost:192.168.65.2'
+      - 'project-3.localhost:192.168.65.2'

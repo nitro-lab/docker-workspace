@@ -1,0 +1,18 @@
+[mysqld]
+skip-log-bin
+
+# Off strict mode
+sql_mode=""
+
+# Slow query settings:
+# slow_query_log=0
+slow_query_log=/var/log/mysql/slow.log
+long_query_time=2
+max_allowed_packet=64M
+innodb_strict_mode=0
+general_log_file        = /var/log/mysql/all.log
+general_log             = 1
+
+query_cache_type=1
+query_cache_size = 256M
+query_cache_limit=512K

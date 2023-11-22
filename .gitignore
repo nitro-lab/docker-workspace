@@ -1,0 +1,15 @@
+.DS_Store
+.idea
+/elasticsearch/data/*
+/mongo/db/*
+/mongo/dump/*
+/mysql-5.7/data/*
+/mysql-5.7/dump/*
+/mysql-5.7/logs/*
+/mysql-8/data/*
+/mysql-8/dump/*
+/mysql-8/logs/*
+/nginx/logs/*
+/postgres/data/*
+/postgres/dump/*
+/projects/*
